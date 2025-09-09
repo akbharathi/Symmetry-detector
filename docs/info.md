@@ -9,56 +9,45 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Compare mirrored bits with XOR:
+The symmetry detector checks if an 8-bit input is symmetric by comparing:
+* Bit 0 with Bit 7
+* Bit 1 with Bit 6
+* Bit 2 with Bit 5
+* Bit 3 with Bit 4
 
-xor x1(w[0], i[0], i[7]);
-xor x2(w[1], i[1], i[6]);
-xor x3(w[2], i[2], i[5]);
-xor x4(w[3], i[3], i[4]);
-
-
-Each XOR compares the first half of the input with the mirrored second half.
-
-w[0] = 1 if i[0] ≠ i[7], otherwise 0.
-
-Similarly, w[1], w[2], w[3] for other pairs.
-
-Generate intermediate AND signals:
-
-and a1(w[4], ~w[0], ~w[1]);
-and a2(w[5], ~w[2], ~w[3]);
-
-
-Checks if first pair and second pair both match (~w = 1 if bits match).
-
-Final output:
-
-and a3(out, w[4], w[5]);
-
-
-out = 1 only if all mirrored bit pairs match → input is symmetric.
-
-Count mismatches:
-
-assign mismatch_count = w[0] + w[1] + w[2] + w[3];
-
-
-Adds up mismatched pairs.
-
-Example: if only i[0] ≠ i[7] and i[2] ≠ i[5], mismatch_count = 2.
+Key Components:
+* XOR Gates: Compare symmetric bit pairs (output 1 if bits differ)
+* AND Gates: Determine if all comparisons match (output 1 if symmetric)
+* Mismatch Counter: Sums XOR outputs to count how many bit pairs differ
 
 ## How to test
 
-Create a testbench module
-Simulation checks:
-out should be 1 only for symmetric inputs.
+The symmetry detector is tested using a Verilog testbench that applies various input patterns and verifies both the symmetry detection output and the mismatch count.
 
-mismatch_count should match the number of differing mirrored bit pairs.
+Key Test Cases Explained
+* Example 1: Symmetric Pattern (8'b11000011)
+Input: 1 1 0 0 0 0 1 1
+Comparison pairs:
+- Bit 0 (1) vs Bit 7 (1) → Match (XOR = 0)
+- Bit 1 (1) vs Bit 6 (0) → Match (XOR = 0) 
+- Bit 2 (0) vs Bit 5 (0) → Match (XOR = 0)
+- Bit 3 (0) vs Bit 4 (0) → Match (XOR = 0)
 
-Example:
+Expected Output:
+- out = 1 (symmetric)
+- mismatch_count = 0
 
-Input=10011001 → Out=1, Mismatch=0
-Input=10101011 → Out=0, Mismatch=3
+* Example 2: Asymmetric Pattern (8'b11010011)
+Input: 1 1 0 1 0 0 1 1
+Comparison pairs:
+- Bit 0 (1) vs Bit 7 (1) → Match (XOR = 0)
+- Bit 1 (1) vs Bit 6 (0) → Mismatch (XOR = 1)
+- Bit 2 (0) vs Bit 5 (0) → Match (XOR = 0)
+- Bit 3 (1) vs Bit 4 (0) → Mismatch (XOR = 1)
+
+Expected Output:
+- out = 0 (not symmetric)
+- mismatch_count = 2 (two mismatched pairs)
 
 ## External hardware
 
